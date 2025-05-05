@@ -282,9 +282,9 @@ func (g *FingerprintGenerator) Generate(opts ...FingerprintOption) (*Fingerprint
 func (g *FingerprintGenerator) transformFingerprint(raw map[string]string, headers map[string]string, mockWebRTC bool, slim bool) (*Fingerprint, error) {
 	// Preprocess the fingerprint data
 	for key, value := range raw {
-		// Handle missing values
+		// Handle missing values, set to empty string
 		if value == "*MISSING_VALUE*" {
-			raw[key] = "null"
+			raw[key] = ""
 			continue
 		}
 
