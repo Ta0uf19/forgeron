@@ -63,7 +63,7 @@ if err != nil {
 Example output:
 ```
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36
 sec-ch-ua-mobile: ?0
 Sec-Fetch-Mode: same-site
 Sec-Fetch-Dest: navigate
@@ -71,7 +71,7 @@ Accept-Language: en-US;q=1.0
 Sec-Fetch-Site: ?1
 sec-ch-ua-platform: "macOS"
 Accept-Encoding: gzip, deflate, br, zstd
-sec-ch-ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+sec-ch-ua: "Not(A:Brand";v="8", "Chromium";v="144", "Google Chrome";v="144"
 Upgrade-Insecure-Requests: 1
 Sec-Fetch-User: document
 ```
@@ -93,7 +93,7 @@ Set specificiations for browsers, including version ranges and HTTP version:
 // Generate headers with specific constraints
 headers, err := generator.GenerateHeaders(forgeron.HeaderConstraints{
     BrowserSpecs: []*forgeron.BrowserSpec{
-        {Name: "chrome", MinVersion: 100, MaxVersion: 131},
+        {Name: "chrome", MinVersion: 120, MaxVersion: 144},
         {Name: "firefox", MinVersion: 80, HTTPVersion: "1"},
     },
 })
@@ -152,20 +152,20 @@ fingerprint, err := generator.Generate(forgeron.WithHeaderConstraints(
     HasHDR:           false,
   },
   Navigator: forgeron.NavigatorFingerprint{
-    UserAgent:     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    UserAgent:     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     UserAgentData: &forgeron.UserAgentData{
       Brands: []forgeron.UserAgentBrand{
         forgeron.UserAgentBrand{
-          Brand:   "Chromium",
-          Version: "128",
+          Brand:   "Not(A:Brand",
+          Version: "8",
         },
         forgeron.UserAgentBrand{
-          Brand:   "Not;A=Brand",
-          Version: "24",
+          Brand:   "Chromium",
+          Version: "144",
         },
         forgeron.UserAgentBrand{
           Brand:   "Google Chrome",
-          Version: "128",
+          Version: "144",
         },
       },
       Mobile:          false,
@@ -174,26 +174,26 @@ fingerprint, err := generator.Generate(forgeron.WithHeaderConstraints(
       Bitness:         "64",
       FullVersionList: []forgeron.UserAgentBrand{
         forgeron.UserAgentBrand{
-          Brand:   "Chromium",
-          Version: "128.0.6613.120",
+          Brand:   "Not(A:Brand",
+          Version: "8.0.0.0",
         },
         forgeron.UserAgentBrand{
-          Brand:   "Not;A=Brand",
-          Version: "24.0.0.0",
+          Brand:   "Chromium",
+          Version: "144.0.7559.97",
         },
         forgeron.UserAgentBrand{
           Brand:   "Google Chrome",
-          Version: "128.0.6613.120",
+          Version: "144.0.7559.97",
         },
       },
       Model:           "",
-      PlatformVersion: "13.7.0",
-      UAFullVersion:   "128.0.6613.120",
+      PlatformVersion: "26.2.0",
+      UAFullVersion:   "144.0.7559.97",
     },
     DoNotTrack:  (*string)(nil),
     AppCodeName: "Mozilla",
     AppName:     "Netscape",
-    AppVersion:  "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    AppVersion:  "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     OSCpu:       "null",
     Webdriver:   "false",
     Language:    "en-US",
@@ -226,8 +226,8 @@ fingerprint, err := generator.Generate(forgeron.WithHeaderConstraints(
     "Sec-Fetch-Site":            "?1",
     "Sec-Fetch-User":            "document",
     "Upgrade-Insecure-Requests": "1",
-    "User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "sec-ch-ua":                 "\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Google Chrome\";v=\"128\"",
+    "User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sec-ch-ua":                 "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"",
     "sec-ch-ua-mobile":          "?0",
     "sec-ch-ua-platform":        "\"macOS\"",
   },
