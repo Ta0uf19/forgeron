@@ -30,6 +30,13 @@ Forgeron is ideal for:
 go get github.com/ta0uf19/forgeron
 ```
 
+Requires Go 1.25 or newer.
+
+The fingerprint and header data is embedded in the binary, so there is no runtime
+download or filesystem dependency. The bundled data points are synced from
+[Apify's fingerprint-suite](https://github.com/apify/fingerprint-suite); the exact
+upstream version is exposed as `forgeron.DataPointsVersion`.
+
 ## Usage
 
 The header generator creates realistic HTTP headers by generating:
