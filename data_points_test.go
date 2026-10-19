@@ -3,7 +3,12 @@ package forgeron
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"io/fs"
+	"path"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -21,13 +26,31 @@ func zipEntryNames(data []byte) ([]string, error) {
 	return names, nil
 }
 
-// dataPointFiles lists every file embedded from data_points/ and consumed at runtime.
-var dataPointFiles = []string{
-	"browser-helper-file.json",
-	"headers-order.json",
-	"header-network-definition.zip",
-	"input-network-definition.zip",
-	"fingerprint-network-definition.zip",
+// dataPointChecksums pins the SHA-256 digest of every file embedded from data_points/,
+// as published by apify/fingerprint-suite at DataPointsVersion.
+//
+// This is the single source of truth for which files the library ships. Updating the data
+// means bumping DataPointsVersion and replacing these digests in the same commit;
+// TestDataPointChecksums fails otherwise. Regenerate with:
+//
+//	shasum -a 256 data_points/*
+var dataPointChecksums = map[string]string{
+	"browser-helper-file.json":           "965ee8894d3a4e7815d02e650be9fecf3c3c7e91323b537e2e77371295313aac",
+	"headers-order.json":                 "3e89bfcf8f648bd5df76aa45d80e075c65341a0402b64b9d79c96dbc00fb4db6",
+	"header-network-definition.zip":      "67a17948164967e0c23ec1df652b91d746ae05d42a6fc22b2d93e521e7f3fe0a",
+	"input-network-definition.zip":       "3b918d231c70202c5b0755c6e9f0e8a250e7a6dc21260ecd7cb936028585c19d",
+	"fingerprint-network-definition.zip": "5cc4668d858e0365a7ab0feeaeed8ce63b37747d06924070403e9eaa88057d4e",
+}
+
+// dataPointFiles lists every file embedded from data_points/ and consumed at runtime,
+// sorted for deterministic subtest ordering.
+func dataPointFiles() []string {
+	names := make([]string, 0, len(dataPointChecksums))
+	for name := range dataPointChecksums {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // networkDefinitionFiles lists the zipped Bayesian network definitions.
@@ -68,7 +91,7 @@ func readHeadersOrder(t *testing.T) map[string][]string {
 // TestDataPointFilesAreEmbedded verifies every data point file is present in the embed FS
 // and non-empty. A missing file degrades silently for the JSON loaders, so assert directly.
 func TestDataPointFilesAreEmbedded(t *testing.T) {
-	for _, name := range dataPointFiles {
+	for _, name := range dataPointFiles() {
 		t.Run(name, func(t *testing.T) {
 			data, err := dataFiles.ReadFile("data_points/" + name)
 			if err != nil {
@@ -78,6 +101,75 @@ func TestDataPointFilesAreEmbedded(t *testing.T) {
 				t.Fatalf("%s is empty", name)
 			}
 		})
+	}
+}
+
+// TestDataPointChecksums pins the embedded data points to the exact upstream bytes for
+// DataPointsVersion.
+//
+// Without this, drift between data_points/ and the version the project claims to ship is
+// undetectable: a partial sync, a truncated download or a hand-edited file all still parse
+// and still generate plausible fingerprints. Updating the data is expected to fail this
+// test until DataPointsVersion and the digests are bumped together.
+func TestDataPointChecksums(t *testing.T) {
+	if DataPointsVersion == "" {
+		t.Fatal("DataPointsVersion is empty")
+	}
+
+	for _, name := range dataPointFiles() {
+		t.Run(name, func(t *testing.T) {
+			data, err := dataFiles.ReadFile("data_points/" + name)
+			if err != nil {
+				t.Fatalf("failed to read %s: %v", name, err)
+			}
+			sum := sha256.Sum256(data)
+			got := hex.EncodeToString(sum[:])
+			want := dataPointChecksums[name]
+			if got != want {
+				t.Errorf("%s does not match the digest pinned for fingerprint-suite v%s\n"+
+					"  want: %s\n"+
+					"  got:  %s\n"+
+					"If this is an intentional data update, bump DataPointsVersion in "+
+					"data_points.go and refresh dataPointChecksums.",
+					name, DataPointsVersion, want, got)
+			}
+		})
+	}
+}
+
+// TestDataPointChecksumsCoverEmbeddedFiles verifies the pinned digest list matches the
+// embed directive exactly, so a newly added or removed data file cannot escape checksumming.
+func TestDataPointChecksumsCoverEmbeddedFiles(t *testing.T) {
+	entries, err := fs.ReadDir(dataFiles, "data_points")
+	if err != nil {
+		t.Fatalf("failed to list data_points: %v", err)
+	}
+
+	embedded := make(map[string]bool, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		// Mirror the //go:embed patterns: only *.json and *.zip are embedded.
+		switch path.Ext(e.Name()) {
+		case ".json", ".zip":
+			embedded[e.Name()] = true
+		}
+	}
+
+	if len(embedded) == 0 {
+		t.Fatal("no data point files found in the embed FS")
+	}
+
+	for name := range embedded {
+		if _, ok := dataPointChecksums[name]; !ok {
+			t.Errorf("embedded file %q has no pinned checksum; add it to dataPointChecksums", name)
+		}
+	}
+	for name := range dataPointChecksums {
+		if !embedded[name] {
+			t.Errorf("dataPointChecksums pins %q, which is not embedded; remove it", name)
+		}
 	}
 }
 
